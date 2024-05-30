@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+env:
+  AZURE_WEBAPP_NAME: "blazorazuretest55"
+  CONTAINER_REGISTRY: ${{ secrets.REGISTRY_URL }}
+
 permissions:
   contents: read
 
@@ -15,15 +19,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Docker build and push
+      - name: Azure authentication
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login
         uses: azure/docker-login@v2
         with:
-          login-server: blazorazuretest.azurecr.io
+          login-server: ${{ env.CONTAINER_REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - run: |
-          docker build . -t blazorazuretest.azurecr.io/myapp:${{ github.sha }}
-          docker push blazorazuretest.azurecr.io/myapp:${{ github.sha }}
+
+      - name: Docker Build & Push
+        run: |
+          docker build . -t ${{ env.CONTAINER_REGISTRY }}/myapp:${{ github.sha }}
+          docker push ${{ env.CONTAINER_REGISTRY }}/myapp:${{ github.sha }}
+
+      - name: "Deploy to Azure Web App for Container"
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          images: ${{ env.CONTAINER_REGISTRY }}/myapp:${{ github.sha }}
 
       # - name: Docker build and push
       #   uses: azure/webapps-deploy@v2
