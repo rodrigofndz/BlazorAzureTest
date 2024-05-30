@@ -42,6 +42,10 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           images: ${{ env.CONTAINER_REGISTRY }}/myapp:${{ github.sha }}
 
+      - name: Azure logout
+        run: |
+          az logout
+
       # - name: Docker build and push
       #   uses: azure/webapps-deploy@v2
       #   with:
